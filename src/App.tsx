@@ -1,79 +1,89 @@
-import { useCallback, useRef, useState } from "react";
-import Webcam from "react-webcam";
-import { createWorker } from "tesseract.js";
+// @ts-nocheck
+// import axios from "axios";
+import { currencies, currenciesData, mockObj } from "common/mock";
+import { useEffect, useState } from "react";
+import { Autocomplete, TextField, Typography, Grid } from "@mui/material";
 import "./App.css";
 
-const FACING_MODE_USER = "user";
-const FACING_MODE_ENVIRONMENT = "environment";
+// const axiosOptions = {
+//   method: "GET",
+//   url: "https://openexchangerates.org/api/latest.json",
+//   params: {
+//     app_id: "2b35e2eef4f94bd79ff49d16952e5ef5",
+//   },
+// };
 
-const videoConstraints = {
-  facingMode: FACING_MODE_USER,
-};
-
-const worker = createWorker({
-  logger: (data) => console.log(data),
-});
+// axios
+//   .request(axiosOptions)
+//   .then(function (response) {
+//     console.log(response.data);
+//   })
+//   .catch(function (error) {
+//     console.error(error);
+//   });
 
 function App() {
-  const [facingMode, setFacingMode] = useState(FACING_MODE_USER);
-  const [text, setText] = useState("");
+  const rateValues = mockObj.rates;
+  const [firstRate, setFirstRate] = useState("");
+  const [secondRate, setSecondRate] = useState("");
+  const [value, setValue] = useState(0);
+  const [difference, setDifference] = useState(0);
+  const [result, setResult] = useState(0);
 
-  const handleClick = useCallback(() => {
-    setFacingMode((prevState) =>
-      prevState === FACING_MODE_USER
-        ? FACING_MODE_ENVIRONMENT
-        : FACING_MODE_USER
-    );
-  }, []);
-
-  const webcamRef = useRef(null);
-  const [imgSrc, setImgSrc] = useState(null);
-
-  const recognize = useCallback(async () => {
-    if (imgSrc) {
-      const file = imgSrc;
-      const lang = "eng";
-      await worker.load();
-      await worker.loadLanguage(lang);
-      await worker.initialize(lang);
-      const {
-        data: { text },
-      } = await worker.recognize(file);
-      console.log("result", text);
-      setText(text);
-      await worker.terminate();
-      return text;
+  useEffect(() => {
+    if (firstRate && secondRate) {
+      setDifference(rateValues[secondRate] / rateValues[firstRate]);
     }
-  }, [imgSrc]);
+  }, [firstRate, secondRate, rateValues]);
 
-  const capture = useCallback(() => {
-    if (webcamRef.current) {
-      // @ts-ignore
-      const imageSrc = webcamRef.current.getScreenshot();
-      setImgSrc(imageSrc);
-      recognize();
-    }
-  }, [webcamRef, setImgSrc, recognize]);
+  useEffect(() => {
+    setResult(value * difference);
+  }, [value, difference]);
 
   return (
-    <div className="container">
-      <Webcam
-        ref={webcamRef}
-        audio={false}
-        screenshotFormat="image/jpeg"
-        videoConstraints={{
-          ...videoConstraints,
-          facingMode,
-        }}
-      />
-      <button className="buttonHandleClick" onClick={handleClick}>
-        Switch camera
-      </button>
-      <button className="buttonCapture" onClick={capture}>
-        Capture
-      </button>
-      {imgSrc && <img src={imgSrc} alt="snapshot" />}
-      {text && <p className="text">{text}</p>}
+    <div className="wrapper">
+      <h3>Exchange rates</h3>
+      {Boolean(difference) && (
+        <p>
+          1 {currenciesData[firstRate]} equals {difference.toFixed(2) + " "}
+          {currenciesData[secondRate]}
+        </p>
+      )}
+      <Grid container spacing={3}>
+        <Grid item xs={6}>
+          <Autocomplete
+            options={currencies}
+            onChange={(_, option) => setFirstRate(option?.value)}
+            getOptionLabel={(option) => `${option.value}: ${option.label}`}
+            renderInput={(params) => <TextField {...params} label="Currency" />}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <Autocomplete
+            options={currencies}
+            onChange={(_, option) => setSecondRate(option?.value)}
+            getOptionLabel={(option) => `${option.value}: ${option.label}`}
+            renderInput={(params) => <TextField {...params} label="Currency" />}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            value={value}
+            fullWidth
+            disabled={!difference}
+            onChange={(e) =>
+              setValue(isNaN(+e.target.value) ? secondValue : +e.target.value)
+            }
+          />
+        </Grid>
+        <Grid item xs={6}>
+          {Boolean(result) && (
+            <Typography variant="h5">{`${result.toFixed(
+              2
+            )} ${secondRate}`}</Typography>
+          )}
+        </Grid>
+      </Grid>
     </div>
   );
 }
