@@ -1,5 +1,5 @@
 import "./App.css";
-import { Rates } from "components/Camera/Rates";
+import { Rates } from "components/Rates";
 
 function App() {
   return (
