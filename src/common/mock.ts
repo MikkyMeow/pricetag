@@ -1,6 +1,21 @@
 import { currenciesToArray } from "./helpers";
 
-export const mockObj = {
+export interface IMockObj {
+  disclaimer: string;
+  license: string;
+  timestamp: number;
+  base: string;
+  rates: { [key: string]: number };
+}
+
+export type TCurrenciesData = { [key: string]: string };
+
+export interface ICurrensies {
+  label: string;
+  value: string;
+}
+
+export const mockObj: IMockObj = {
   disclaimer: "Usage subject to terms: https://openexchangerates.org/terms",
   license: "https://openexchangerates.org/license",
   timestamp: 1667386800,
@@ -178,7 +193,7 @@ export const mockObj = {
   },
 };
 
-export const currenciesData = {
+export const currenciesData: TCurrenciesData = {
   AED: "United Arab Emirates Dirham",
   AFN: "Afghan Afghani",
   ALL: "Albanian Lek",
@@ -351,4 +366,4 @@ export const currenciesData = {
   ZWL: "Zimbabwean Dollar",
 };
 
-export const currencies = currenciesToArray(currenciesData);
+export const currencies: ICurrensies[] = currenciesToArray(currenciesData);
